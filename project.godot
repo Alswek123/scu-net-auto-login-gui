@@ -13,8 +13,8 @@ config_version=5
 config/name="SCUNET Config Tool"
 run/main_scene="res://Main.tscn"
 config/features=PackedStringArray("4.6")
-boot_splash/image="uid://kibp8mdsqgq2"
-config/icon="uid://kibp8mdsqgq2"
+boot_splash/image=""
+config/icon="res://icon.svg"
 
 [display]
 

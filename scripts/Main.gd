@@ -1,7 +1,7 @@
 extends Control
 
 const TASK_NAME := "SCUNET Auto Login"
-const DEFAULT_DIR := "D:/scu/release_package"
+const DEFAULT_DIR := ""
 const LOGIN_EXE := "scu_net_auto_login.exe"
 const CONFIG_FILE := "Config/setting.json"
 const TOOL_CONFIG_FILE := "Config/scunet_config_tool.json"
@@ -68,7 +68,7 @@ func _build_ui() -> void:
 	dir_row.add_theme_constant_override("separation", 8)
 	dir_edit = LineEdit.new()
 	dir_edit.text = release_dir.replace("/", "\\")
-	dir_edit.placeholder_text = "例如 D:\\scu\\release_package"
+	dir_edit.placeholder_text = "请输入 scu_net_auto_login.exe 所在目录"
 	dir_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	dir_row.add_child(dir_edit)
 	_add_button(dir_row, "读取目录", _apply_directory)
@@ -178,11 +178,25 @@ func _find_release_dir() -> String:
 
 func _load_config() -> void:
 	_sync_release_dir()
+	if release_dir == "":
+		config = _default_config()
+		_apply_config_to_fields()
+		_set_status("请先输入包含 " + LOGIN_EXE + " 的目录", true)
+		return
+
 	var path := _join(release_dir, CONFIG_FILE)
 	config = _read_json(path)
 	if config.is_empty():
 		config = _default_config()
 
+	_apply_config_to_fields()
+	if FileAccess.file_exists(_join(release_dir, LOGIN_EXE)):
+		_set_status("当前目录：" + release_dir.replace("/", "\\"))
+	else:
+		_set_status("找不到登录器，请手动输入目录", true)
+
+
+func _apply_config_to_fields() -> void:
 	var user := _first_user()
 	username_edit.text = str(user.get("username", ""))
 	password_edit.text = str(user.get("password", ""))
@@ -191,10 +205,6 @@ func _load_config() -> void:
 	initial_delay_spin.value = int(config.get("initialDelay", DEFAULT_INITIAL_DELAY))
 	retry_count_spin.value = int(config.get("retryCount", DEFAULT_RETRY_COUNT))
 	retry_delay_spin.value = int(config.get("retryDelay", DEFAULT_RETRY_DELAY))
-	if FileAccess.file_exists(_join(release_dir, LOGIN_EXE)):
-		_set_status("当前目录：" + release_dir.replace("/", "\\"))
-	else:
-		_set_status("找不到登录器，请手动输入目录", true)
 
 
 func _apply_directory() -> void:
@@ -303,7 +313,8 @@ func _write_task_script(create_task: bool) -> void:
 
 	_save_tool_config()
 
-	var temp_dir := _join(release_dir, "Temp")
+	var temp_root := release_dir if release_dir != "" else OS.get_user_data_dir()
+	var temp_dir := _join(temp_root, "Temp")
 	DirAccess.make_dir_recursive_absolute(temp_dir)
 	var script_path := _join(temp_dir, "scunet_startup_task.ps1")
 	var file := FileAccess.open(script_path, FileAccess.WRITE)
@@ -402,10 +413,14 @@ func _parse_iso_seconds(value: String, fallback: int) -> int:
 
 
 func _load_tool_config() -> Dictionary:
+	if release_dir == "":
+		return {}
 	return _read_json(_join(release_dir, TOOL_CONFIG_FILE))
 
 
 func _save_tool_config() -> void:
+	if release_dir == "":
+		return
 	_write_json(_join(release_dir, TOOL_CONFIG_FILE), {
 		"startupDelaySeconds": int(startup_delay_spin.value)
 	})
@@ -450,6 +465,8 @@ func _set_status(text: String, is_error := false) -> void:
 
 
 func _join(base: String, child: String) -> String:
+	if base.strip_edges() == "":
+		return child
 	return base.rstrip("/\\") + "/" + child
 
 
