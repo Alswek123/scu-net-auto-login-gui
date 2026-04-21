@@ -1,0 +1,22 @@
+# Godot
+.godot/
+/android/
+/export/
+/build/
+
+# Local packages / release outputs
+*.tmp
+*.zip
+*.rar
+*.7z
+
+# Local runtime files
+release_package/
+Config/
+Temp/
+Data/
+application.log
+
+# OS / editor
+Thumbs.db
+Desktop.ini
