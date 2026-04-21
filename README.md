@@ -23,8 +23,8 @@ scu_net_auto_login.exe
 
 适合不想手改 JSON、也不想记命令行参数的普通用户。
 
-面向普通用户发布时，建议直接提供已经打包好的完整 Windows 压缩包，
-解压后即可运行 `SCUNET_Config_Tool.exe` 进行配置。
+下载并解压压缩包后，打开 `SCUNET_Config_Tool.exe`，
+填写账号、密码和运营商后保存配置；如有需要，再启用开机自启。
 
 ## 与上游项目的关系
 
@@ -58,12 +58,6 @@ scu_net_auto_login.exe
 本项目导出的是配置器本体，不包含上游登录源码。
 
 使用 Godot 4.6 打开工程后，导出 `Windows Desktop (Release)` 即可。
-
-命令行导出示例：
-
-```powershell
-godot --headless --path <project-path> --export-release "Windows Desktop" <output-exe>
-```
 
 ## License
 
