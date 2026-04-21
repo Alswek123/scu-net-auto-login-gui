@@ -25,7 +25,15 @@ var startup_delay_spin: SpinBox
 var initial_delay_spin: SpinBox
 var retry_count_spin: SpinBox
 var retry_delay_spin: SpinBox
+var connect_wifi_check: CheckBox
+var auto_tick_check: CheckBox
 var hotspot_check: CheckBox
+var bypass_proxy_check: CheckBox
+var bypass_core_edit: LineEdit
+var bypass_core_port_spin: SpinBox
+var bypass_core_command_edit: TextEdit
+var cookie_eai_sess_edit: LineEdit
+var cookie_uukey_edit: LineEdit
 var status_label: Label
 var task_label: Label
 
@@ -48,86 +56,120 @@ func _build_ui() -> void:
 	margin.add_theme_constant_override("margin_left", 28)
 	margin.add_theme_constant_override("margin_top", 24)
 	margin.add_theme_constant_override("margin_right", 28)
-	margin.add_theme_constant_override("margin_bottom", 24)
+	margin.add_theme_constant_override("margin_bottom", 20)
 	add_child(margin)
 
+	var root := VBoxContainer.new()
+	root.add_theme_constant_override("separation", 12)
+	root.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	root.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	margin.add_child(root)
+
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	root.add_child(scroll)
+
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 14)
-	margin.add_child(box)
+	box.add_theme_constant_override("separation", 16)
+	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(box)
 
 	box.add_child(_label("SCUNET 配置器", 28))
-	box.add_child(_hint("开源项目取自https://github.com/LFWQSP2641/scu_net_auto_login，本程序为简便项目使用的配置器"))
+	box.add_child(_hint("为 scu_net_auto_login 提供图形化配置，支持滚动查看全部设置项。"))
 
-	var grid := GridContainer.new()
-	grid.columns = 2
-	grid.add_theme_constant_override("h_separation", 12)
-	grid.add_theme_constant_override("v_separation", 12)
-	box.add_child(grid)
+	box.add_child(_section_title("基础设置"))
+	var basic_grid := _new_grid()
+	box.add_child(basic_grid)
 
-	grid.add_child(_label("登录器目录", 16))
 	var dir_row := HBoxContainer.new()
 	dir_row.add_theme_constant_override("separation", 8)
-	dir_edit = LineEdit.new()
+	dir_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	dir_edit = _line_edit("请输入 scu_net_auto_login.exe 所在目录")
 	dir_edit.text = release_dir.replace("/", "\\")
-	dir_edit.placeholder_text = "请输入 scu_net_auto_login.exe 所在目录"
-	dir_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	dir_row.add_child(dir_edit)
 	_add_button(dir_row, "读取目录", _apply_directory)
-	grid.add_child(dir_row)
+	_add_row(basic_grid, "登录器目录", dir_row, "优先读取配置器同目录下的登录器；识别不到时可手动填写。")
 
-	grid.add_child(_label("账号", 16))
-	username_edit = LineEdit.new()
-	username_edit.placeholder_text = "校园网账号"
-	grid.add_child(username_edit)
+	username_edit = _line_edit("校园网账号")
+	_add_row(basic_grid, "账号", username_edit)
 
-	grid.add_child(_label("密码", 16))
-	password_edit = LineEdit.new()
-	password_edit.placeholder_text = "密码"
-	password_edit.secret = true
-	grid.add_child(password_edit)
+	password_edit = _line_edit("密码", true)
+	_add_row(basic_grid, "密码", password_edit)
 
-	grid.add_child(_label("运营商", 16))
 	service_box = OptionButton.new()
+	service_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_add_service("校园网", "EDUNET")
 	_add_service("中国电信", "CHINATELECOM")
 	_add_service("中国移动", "CHINAMOBILE")
 	_add_service("中国联通", "CHINAUNICOM")
-	grid.add_child(service_box)
+	_add_row(basic_grid, "运营商", service_box)
 
-	grid.add_child(_label("开机后延迟", 16))
 	startup_delay_spin = _spin(DEFAULT_STARTUP_DELAY, 0, 600, " 秒")
-	grid.add_child(startup_delay_spin)
+	_add_row(basic_grid, "开机后延迟", startup_delay_spin, "修改后需要重新启用一次开机自启，计划任务才会更新。")
 
-	grid.add_child(_label("登录前等待", 16))
 	initial_delay_spin = _spin(DEFAULT_INITIAL_DELAY, 0, 300, " 秒")
-	grid.add_child(initial_delay_spin)
+	_add_row(basic_grid, "登录前等待", initial_delay_spin)
 
-	grid.add_child(_label("重试次数", 16))
 	retry_count_spin = _spin(DEFAULT_RETRY_COUNT, 1, 10, " 次")
-	grid.add_child(retry_count_spin)
+	_add_row(basic_grid, "重试次数", retry_count_spin)
 
-	grid.add_child(_label("重试间隔", 16))
 	retry_delay_spin = _spin(DEFAULT_RETRY_DELAY, 1, 120, " 秒")
-	grid.add_child(retry_delay_spin)
+	_add_row(basic_grid, "重试间隔", retry_delay_spin)
 
-	grid.add_child(_label("自动开启热点", 16))
-	hotspot_check = _check_box("登录成功后开启")
-	grid.add_child(hotspot_check)
+	box.add_child(_section_title("功能开关"))
+	var feature_grid := _new_grid()
+	box.add_child(feature_grid)
+
+	connect_wifi_check = _check_box("自动连接 SCUNET WiFi")
+	_add_row(feature_grid, "自动连接 WiFi", connect_wifi_check, "在登录前尝试连接校园网 WiFi。")
+
+	auto_tick_check = _check_box("断线后继续重试")
+	_add_row(feature_grid, "断线重连", auto_tick_check, "可能会让登录器在后台持续重试。", true)
+
+	hotspot_check = _check_box("登录成功后开启热点")
+	_add_row(feature_grid, "自动开启热点", hotspot_check, "会共享当前网络，请确认热点密码、流量和设备安全。", true)
+
+	box.add_child(_section_title("高级设置"))
+	box.add_child(_warning("以下项目仅在明确知道用途时再修改；填错可能导致登录失败或网络异常。"))
+	var advanced_grid := _new_grid()
+	box.add_child(advanced_grid)
+
+	bypass_proxy_check = _check_box("启用 SOCKS5 代理绕过")
+	_add_row(advanced_grid, "校园网代理绕过", bypass_proxy_check, "高级功能，不需要时建议保持默认。", true)
+
+	bypass_core_edit = _line_edit("核心名称，可留空")
+	_add_row(advanced_grid, "绕过核心名称", bypass_core_edit, "例如代理核心或辅助程序名称。", true)
+
+	bypass_core_port_spin = _spin(0, 0, 65535, "")
+	_add_row(advanced_grid, "绕过核心端口", bypass_core_port_spin, "仅在配合外部核心时使用。", true)
+
+	bypass_core_command_edit = TextEdit.new()
+	bypass_core_command_edit.placeholder_text = "每行一条命令，可留空"
+	bypass_core_command_edit.custom_minimum_size = Vector2(0, 100)
+	bypass_core_command_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_add_row(advanced_grid, "绕过核心命令", bypass_core_command_edit, "危险功能。这里填写的命令会被执行，请勿粘贴来源不明的内容。", true)
+
+	cookie_eai_sess_edit = _line_edit("可留空")
+	_add_row(advanced_grid, "Cookie EaiSess", cookie_eai_sess_edit, "敏感参数，请勿截图或公开分享。", true)
+
+	cookie_uukey_edit = _line_edit("可留空")
+	_add_row(advanced_grid, "Cookie UUkey", cookie_uukey_edit, "敏感参数，请勿截图或公开分享。", true)
 
 	var buttons := HBoxContainer.new()
 	buttons.add_theme_constant_override("separation", 8)
-	box.add_child(buttons)
+	root.add_child(buttons)
 	_add_button(buttons, "保存配置", _save_config)
 	_add_button(buttons, "测试登录", _test_login)
 	_add_button(buttons, "启用自启", _enable_startup)
 	_add_button(buttons, "取消自启", _disable_startup)
 
 	task_label = _hint("自启状态：检查中")
-	box.add_child(task_label)
+	root.add_child(task_label)
 
 	status_label = _hint("")
 	status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	box.add_child(status_label)
+	root.add_child(status_label)
 
 
 func _label(text: String, size: int) -> Label:
@@ -139,10 +181,55 @@ func _label(text: String, size: int) -> Label:
 	return label
 
 
+func _section_title(text: String) -> Label:
+	var label := _label(text, 20)
+	return label
+
+
 func _hint(text: String) -> Label:
 	var label := _label(text, 14)
 	label.add_theme_color_override("font_color", HINT_COLOR)
 	return label
+
+
+func _warning(text: String) -> Label:
+	var label := _label(text, 14)
+	label.add_theme_color_override("font_color", WARN_COLOR)
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	return label
+
+
+func _new_grid() -> GridContainer:
+	var grid := GridContainer.new()
+	grid.columns = 2
+	grid.add_theme_constant_override("h_separation", 12)
+	grid.add_theme_constant_override("v_separation", 12)
+	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	return grid
+
+
+func _line_edit(placeholder: String, secret := false) -> LineEdit:
+	var line_edit := LineEdit.new()
+	line_edit.placeholder_text = placeholder
+	line_edit.secret = secret
+	line_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	return line_edit
+
+
+func _field_cell(control: Control, hint_text := "", is_warning := false) -> VBoxContainer:
+	var cell := VBoxContainer.new()
+	cell.add_theme_constant_override("separation", 4)
+	cell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	control.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	cell.add_child(control)
+	if hint_text != "":
+		cell.add_child(_warning(hint_text) if is_warning else _hint(hint_text))
+	return cell
+
+
+func _add_row(grid: GridContainer, title: String, control: Control, hint_text := "", is_warning := false) -> void:
+	grid.add_child(_label(title, 16))
+	grid.add_child(_field_cell(control, hint_text, is_warning))
 
 
 func _add_button(parent: Control, text: String, callback: Callable) -> void:
@@ -175,6 +262,7 @@ func _check_box(text: String) -> CheckBox:
 	check_box.add_theme_color_override("font_hover_color", TEXT_COLOR)
 	check_box.add_theme_color_override("font_pressed_color", TEXT_COLOR)
 	check_box.add_theme_color_override("font_focus_color", TEXT_COLOR)
+	check_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	return check_box
 
 
@@ -220,7 +308,15 @@ func _apply_config_to_fields() -> void:
 	initial_delay_spin.value = int(config.get("initialDelay", DEFAULT_INITIAL_DELAY))
 	retry_count_spin.value = int(config.get("retryCount", DEFAULT_RETRY_COUNT))
 	retry_delay_spin.value = int(config.get("retryDelay", DEFAULT_RETRY_DELAY))
+	connect_wifi_check.button_pressed = bool(config.get("enableConnectSCUNETWifi", false))
+	auto_tick_check.button_pressed = bool(config.get("enableAutoTick", false))
 	hotspot_check.button_pressed = bool(config.get("enableHotspot", false))
+	bypass_proxy_check.button_pressed = bool(config.get("bypassCampusNetworkSocks5Proxy", true))
+	bypass_core_edit.text = str(config.get("bypassCampusNetworkCore", ""))
+	bypass_core_port_spin.value = int(config.get("bypassCampusNetworkCorePort", 0))
+	bypass_core_command_edit.text = _array_to_multiline(config.get("bypassCampusNetworkCoreCommand", []))
+	cookie_eai_sess_edit.text = str(config.get("cookieEaiSess", ""))
+	cookie_uukey_edit.text = str(config.get("cookieUUkey", ""))
 
 
 func _apply_directory() -> void:
@@ -260,6 +356,13 @@ func _write_json(path: String, data: Dictionary) -> bool:
 
 func _default_config() -> Dictionary:
 	return {
+		"bypassCampusNetworkCore": "",
+		"bypassCampusNetworkCoreCommand": [],
+		"bypassCampusNetworkCorePort": 0,
+		"bypassCampusNetworkSocks5Proxy": true,
+		"cookieEaiSess": "",
+		"cookieUUkey": "",
+		"enableAutoTick": false,
 		"enableConnectSCUNETWifi": false,
 		"enableHotspot": false,
 		"initialDelay": DEFAULT_INITIAL_DELAY,
@@ -290,7 +393,15 @@ func _save_config() -> bool:
 	config["initialDelay"] = int(initial_delay_spin.value)
 	config["retryCount"] = int(retry_count_spin.value)
 	config["retryDelay"] = int(retry_delay_spin.value)
+	config["enableConnectSCUNETWifi"] = connect_wifi_check.button_pressed
+	config["enableAutoTick"] = auto_tick_check.button_pressed
 	config["enableHotspot"] = hotspot_check.button_pressed
+	config["bypassCampusNetworkSocks5Proxy"] = bypass_proxy_check.button_pressed
+	config["bypassCampusNetworkCore"] = bypass_core_edit.text.strip_edges()
+	config["bypassCampusNetworkCorePort"] = int(bypass_core_port_spin.value)
+	config["bypassCampusNetworkCoreCommand"] = _multiline_to_array(bypass_core_command_edit.text)
+	config["cookieEaiSess"] = cookie_eai_sess_edit.text.strip_edges()
+	config["cookieUUkey"] = cookie_uukey_edit.text.strip_edges()
 
 	DirAccess.make_dir_recursive_absolute(_join(release_dir, "Config"))
 	var file := FileAccess.open(_join(release_dir, CONFIG_FILE), FileAccess.WRITE)
@@ -466,6 +577,30 @@ func _select_service(value: String) -> void:
 			service_box.select(index)
 			return
 	service_box.select(0)
+
+
+func _multiline_to_array(text: String) -> Array:
+	var values: Array = []
+	for raw_line in text.split("\n"):
+		var line := raw_line.strip_edges()
+		if line != "":
+			values.append(line)
+	return values
+
+
+func _array_to_multiline(value) -> String:
+	if typeof(value) != TYPE_ARRAY:
+		return ""
+
+	var result := ""
+	for item in value:
+		var line := str(item).strip_edges()
+		if line == "":
+			continue
+		if result != "":
+			result += "\n"
+		result += line
+	return result
 
 
 func _sync_release_dir() -> void:
