@@ -14,4 +14,3 @@
 
 - GUI 只负责配置与辅助操作
 - 真正的校园网登录仍由 `scu_net_auto_login.exe` 完成
-- 发布到 GitHub 时，建议把完整打包文件作为 Release Asset 上传，而不是直接提交到仓库里

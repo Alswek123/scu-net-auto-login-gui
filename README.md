@@ -19,7 +19,7 @@ scu_net_auto_login.exe
 - 测试运行 `scu_net_auto_login.exe`
 - 在登录器目录无法自动识别时，允许手动输入目录
 
-## 项目定位
+## 使用方式
 
 适合不想手改 JSON、也不想记命令行参数的普通用户。
 
@@ -74,13 +74,6 @@ release_package/
   --export-release 'Windows Desktop' `
   'D:\scu\release_package\SCUNET_Config_Tool.exe'
 ```
-
-## 发布建议
-
-建议将仓库源码与打包文件分开：
-
-- GitHub 仓库：放 Godot 工程源码
-- GitHub Releases：放预编译好的 `release_package.zip / .rar / .7z`
 
 ## License
 
