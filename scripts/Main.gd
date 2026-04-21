@@ -25,6 +25,7 @@ var startup_delay_spin: SpinBox
 var initial_delay_spin: SpinBox
 var retry_count_spin: SpinBox
 var retry_delay_spin: SpinBox
+var hotspot_check: CheckBox
 var status_label: Label
 var task_label: Label
 
@@ -109,6 +110,10 @@ func _build_ui() -> void:
 	retry_delay_spin = _spin(DEFAULT_RETRY_DELAY, 1, 120, " 秒")
 	grid.add_child(retry_delay_spin)
 
+	grid.add_child(_label("自动开启热点", 16))
+	hotspot_check = _check_box("登录成功后开启")
+	grid.add_child(hotspot_check)
+
 	var buttons := HBoxContainer.new()
 	buttons.add_theme_constant_override("separation", 8)
 	box.add_child(buttons)
@@ -163,6 +168,16 @@ func _spin(value: int, min_value: int, max_value: int, suffix: String) -> SpinBo
 	return spin
 
 
+func _check_box(text: String) -> CheckBox:
+	var check_box := CheckBox.new()
+	check_box.text = text
+	check_box.add_theme_color_override("font_color", TEXT_COLOR)
+	check_box.add_theme_color_override("font_hover_color", TEXT_COLOR)
+	check_box.add_theme_color_override("font_pressed_color", TEXT_COLOR)
+	check_box.add_theme_color_override("font_focus_color", TEXT_COLOR)
+	return check_box
+
+
 func _add_service(label: String, value: String) -> void:
 	var index := service_box.item_count
 	service_box.add_item(label)
@@ -205,6 +220,7 @@ func _apply_config_to_fields() -> void:
 	initial_delay_spin.value = int(config.get("initialDelay", DEFAULT_INITIAL_DELAY))
 	retry_count_spin.value = int(config.get("retryCount", DEFAULT_RETRY_COUNT))
 	retry_delay_spin.value = int(config.get("retryDelay", DEFAULT_RETRY_DELAY))
+	hotspot_check.button_pressed = bool(config.get("enableHotspot", false))
 
 
 func _apply_directory() -> void:
@@ -274,6 +290,7 @@ func _save_config() -> bool:
 	config["initialDelay"] = int(initial_delay_spin.value)
 	config["retryCount"] = int(retry_count_spin.value)
 	config["retryDelay"] = int(retry_delay_spin.value)
+	config["enableHotspot"] = hotspot_check.button_pressed
 
 	DirAccess.make_dir_recursive_absolute(_join(release_dir, "Config"))
 	var file := FileAccess.open(_join(release_dir, CONFIG_FILE), FileAccess.WRITE)
