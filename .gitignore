@@ -1,8 +1,8 @@
-# Godot
-.godot/
-/android/
-/export/
+# Build and editor outputs
 /build/
+*.exe
+*.pdb
+.vs/
 
 # Local packages / release outputs
 *.tmp

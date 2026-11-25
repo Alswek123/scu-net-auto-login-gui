@@ -1,68 +1,28 @@
-# SCUNET Config Tool
+# SCUNET 配置器
 
-一个给 Windows 用户使用的图形化配置器，用来为
-[`LFWQSP2641/scu_net_auto_login`](https://github.com/LFWQSP2641/scu_net_auto_login)
-生成和修改配置，并管理开机自启。
+在 Windows 上填写四川大学校园网账号、保存登录设置，并管理登录 Windows 后自动连接。界面使用 C# 和 Windows Forms，独立配置器只有几十 KB。
 
-这个项目 **不重写登录逻辑**。真正执行校园网登录的仍然是上游项目里的：
+## 下载和使用
 
-```text
-scu_net_auto_login.exe
-```
+1. 打开 [最新版本](https://github.com/Alswek123/scu-net-auto-login-gui/releases/latest)，下载 `SCUNET-Windows-x64.zip`，完整解压到一个可以写入的目录。
+2. 双击 `SCUNET_Config_Tool.exe`，填写账号、密码和运营商，点击 **保存配置**。
+3. 在校园网环境中点击 **测试登录**，登录结果显示在登录器窗口。需要自动连接时，到 **登录与自启** 设置延迟并点击 **启用 / 更新**。下次登录 Windows 时生效。
 
-本项目负责的内容：
+已有登录器的用户可以单独下载 `SCUNET_Config_Tool.exe`，放进原目录替换配置器，或使用 **选择文件** 打开已有的登录器。移走目录或修改自启延迟后，点击 **启用 / 更新** 让计划任务采用新设置。
 
-- 填写账号、密码、运营商
-- 读取和写入 `Config/setting.json`
-- 调整开机后延迟、登录前等待、重试次数、重试间隔
-- 可选开启登录成功后自动热点
-- 启用或取消 Windows 开机自启
-- 测试运行 `scu_net_auto_login.exe`
-- 在登录器目录无法自动识别时，允许手动输入目录
+## 兼容性
 
-## 使用方式
+| 登录程序 | 配置文件 | 编辑范围 |
+| --- | --- | --- |
+| `Sal.CLI.exe` | `config/config.json` | 账号、运营商、Wi-Fi、热点、登录等待、重试 |
+| `scu_net_auto_login.exe` | `Config/setting.json` | 以上各项及旧核心的断线重连、代理、命令和 Cookie |
 
-适合不想手改 JSON、也不想记命令行参数的普通用户。
+界面中的等待时间统一用秒。配置器自动转换新版登录器使用的毫秒，并保留已有账号列表中的其他账号和额外字段。若新版配置尚未创建、同目录已有旧配置，打开新版登录器会带入原有账号和通用网络选项，点击保存后写入新版文件。
 
-下载并解压压缩包后，打开 `SCUNET_Config_Tool.exe`，
-填写账号、密码和运营商后保存配置；如有需要，再启用开机自启。
+账号密码保存在登录器的本地 JSON 中。请勿分享配置文件。配置格式损坏或打开后被其他程序修改时，配置器会提示重新读取。
 
-## 与上游项目的关系
+## 从源码构建
 
-- 上游项目：四川大学校园网自动登录核心逻辑
-- 本项目：GUI 配置器
-- 上游仓库地址：
-  [LFWQSP2641/scu_net_auto_login](https://github.com/LFWQSP2641/scu_net_auto_login)
+在 Windows 10/11 上用 PowerShell 执行 `./build.ps1`。脚本调用系统 .NET Framework 的 C# 编译器，输出 `build/SCUNET_Config_Tool.exe`。无需 Godot 或 NuGet 依赖。
 
-如果你只需要命令行或手改配置文件，请直接使用上游项目。
-
-## 当前功能
-
-- 手动输入登录器目录
-- 填写账号和密码
-- 选择运营商
-- 调整开机后延迟
-- 调整登录前等待
-- 调整重试次数
-- 调整重试间隔
-- 配置登录成功后自动开启热点
-- 保存配置
-- 测试登录
-- 启用或取消开机自启
-
-## 开发环境
-
-- Godot 4.6
-- Windows
-
-## 导出
-
-本项目导出的是配置器本体，不包含上游登录源码。
-
-使用 Godot 4.6 打开工程后，导出 `Windows Desktop (Release)` 即可。
-
-## License
-
-本项目源码采用 MIT License。
-
-上游项目和第三方依赖的许可证请分别以它们自己的说明为准。
+配置器采用 [MIT 许可证](LICENSE)。完整包包含上游 v2.1.8 Windows x64 命令行登录器及其 MIT 许可证。校园网认证由上游程序执行。[上游源码与发布记录](https://github.com/LFWQSP2641/scu_net_auto_login/releases/tag/v2.1.8)
